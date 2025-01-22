@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+html{
+  
+}
+body{
+
+}
 
 .task-row.red {
     background-color: #f8d7da; /* red background for pending */
