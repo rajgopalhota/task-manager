@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+.task-row.red {
+    background-color: #f8d7da; /* red background for pending */
+  }
+  
+  .task-row.orange {
+    background-color: #fff3cd; /* orange background for doing */
+  }
+  
+  .task-row.green {
+    background-color: #d4edda; /* green background for finished */
+  }
+  

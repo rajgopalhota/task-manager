@@ -38,7 +38,11 @@ const taskSchema = new mongoose.Schema({
   start_time: { type: Date, required: true },
   end_time: { type: Date, required: true },
   priority: { type: Number, required: true, min: 1, max: 5 },
-  status: { type: String, required: true, enum: ["pending", "finished"] },
+  status: {
+    type: String,
+    required: true,
+    enum: ["pending", "finished", "doing"],
+  },
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -200,69 +204,75 @@ app.delete("/tasks/:id", authenticateToken, async (req, res) => {
 });
 
 // Fetch Dashboard Data
-app.get('/dashboard-stats', authenticateToken, async (req, res) => {
-    try {
-      const user_id = new mongoose.Types.ObjectId(req.user.id); // Fixed this line
-  
-      const totalTasks = await Task.countDocuments({ user_id });
-      const completedTasks = await Task.countDocuments({ user_id, status: 'finished' });
-      const pendingTasks = await Task.countDocuments({ user_id, status: 'pending' });
-  
-      const pendingData = await Task.aggregate([
-        { $match: { user_id, status: 'pending' } },
-        {
-          $group: {
-            _id: '$priority',
-            totalLapsedTime: {
-              $sum: {
-                $cond: [
-                  { $gt: [new Date(), '$start_time'] },
-                  { $subtract: [new Date(), '$start_time'] },
-                  0,
-                ],
-              },
-            },
-            balanceEstimatedTime: {
-              $sum: {
-                $cond: [
-                  { $gt: ['$end_time', new Date()] },
-                  { $subtract: ['$end_time', new Date()] },
-                  0,
-                ],
-              },
-            },
+app.get("/dashboard-stats", authenticateToken, async (req, res) => {
+  try {
+    const user_id = new mongoose.Types.ObjectId(req.user.id); // Fixed this line
+
+    const totalTasks = await Task.countDocuments({ user_id });
+    const completedTasks = await Task.countDocuments({
+      user_id,
+      status: "finished",
+    });
+    const pendingTasks = await Task.countDocuments({
+      user_id,
+      status: "pending",
+    });
+
+    // Calculate average completion time
+    const averageCompletionTimeData = await Task.aggregate([
+      { $match: { user_id, status: "finished" } },
+      {
+        $group: {
+          _id: null,
+          averageCompletionTime: {
+            $avg: { $subtract: ["$end_time", "$start_time"] },
           },
         },
-      ]);
-  
-      const averageCompletionTimeData = await Task.aggregate([
-        { $match: { user_id, status: 'finished' } },
-        {
-          $group: {
-            _id: null,
-            averageCompletionTime: {
-              $avg: { $subtract: ['$end_time', '$start_time'] },
-            },
-          },
+      },
+    ]);
+
+    const averageCompletionTime = averageCompletionTimeData.length
+      ? averageCompletionTimeData[0].averageCompletionTime / (1000 * 60 * 60)
+      : 0;
+
+    // Calculate total and average remaining time for pending tasks
+    const pendingTasksData = await Task.aggregate([
+      { $match: { user_id, status: "pending" } },
+      {
+        $project: {
+          timeLeft: { $subtract: ["$end_time", new Date()] },
         },
-      ]);
-  
-      const averageCompletionTime = averageCompletionTimeData.length
-        ? averageCompletionTimeData[0].averageCompletionTime / (1000 * 60 * 60)
-        : 0;
-  
-      res.status(200).json({
-        totalTasks,
-        completedTasks,
-        pendingTasks,
-        pendingData,
-        averageCompletionTime: averageCompletionTime.toFixed(2),
-      });
-    } catch (error) {
-      res.status(500).json({ message: 'Server error', error });
-    }
-  });
-  
+      },
+    ]);
+
+    let totalRemainingTime = 0;
+    pendingTasksData.forEach((task) => {
+      if (task.timeLeft > 0) {
+        totalRemainingTime += task.timeLeft;
+      }
+    });
+
+    const averageRemainingTime = pendingTasksData.length
+      ? totalRemainingTime / pendingTasksData.length
+      : 0;
+
+    // Convert remaining time from milliseconds to hours
+    const remainingTimeInHours = (
+      averageRemainingTime /
+      (1000 * 60 * 60)
+    ).toFixed(2);
+
+    res.status(200).json({
+      totalTasks,
+      completedTasks,
+      pendingTasks,
+      averageCompletionTime: averageCompletionTime.toFixed(2),
+      averageRemainingTime: remainingTimeInHours, // Send average remaining time
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+});
 
 // Start Server
 app.listen(PORT, () => {
