@@ -1,27 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useSelector } from 'react-redux';
-import { Card, Row, Col, Statistic } from 'antd';
-import { CheckCircleOutlined, ClockCircleOutlined, FileDoneOutlined, HourglassOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { useSelector } from "react-redux";
+import { Card, Row, Col, Statistic } from "antd";
+import {
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  FileDoneOutlined,
+  HourglassOutlined,
+} from "@ant-design/icons";
 
-const Statistics = () => {
-  const [stats, setStats] = useState({});
-  const token = useSelector((state) => state.auth.token);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/dashboard-stats', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setStats(response.data);
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-      }
-    };
-    fetchStats();
-  }, [token]);
-
+const Statistics = ({ stats }) => {
   return (
     <div>
       <h2>Dashboard Stats</h2>
@@ -31,7 +19,7 @@ const Statistics = () => {
             <Statistic
               title="Total Tasks"
               value={stats.totalTasks}
-              valueStyle={{ color: '#3f8600' }}
+              valueStyle={{ color: "#3f8600" }}
               prefix={<FileDoneOutlined />}
             />
           </Card>
@@ -41,7 +29,7 @@ const Statistics = () => {
             <Statistic
               title="Completed Tasks"
               value={stats.completedTasks}
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: "#1890ff" }}
               prefix={<CheckCircleOutlined />}
             />
           </Card>
@@ -51,7 +39,7 @@ const Statistics = () => {
             <Statistic
               title="Pending Tasks"
               value={stats.pendingTasks}
-              valueStyle={{ color: '#cf1322' }}
+              valueStyle={{ color: "#cf1322" }}
               prefix={<ClockCircleOutlined />}
             />
           </Card>
@@ -64,7 +52,7 @@ const Statistics = () => {
               title="Average Remaining Time"
               value={stats.averageRemainingTime}
               suffix="hours"
-              valueStyle={{ color: '#cf1322' }}
+              valueStyle={{ color: "#cf1322" }}
               prefix={<HourglassOutlined />}
             />
           </Card>
@@ -75,7 +63,7 @@ const Statistics = () => {
               title="Average Completion Time"
               value={stats.averageCompletionTime}
               suffix="hours"
-              valueStyle={{ color: '#3f8600' }}
+              valueStyle={{ color: "#3f8600" }}
               prefix={<ClockCircleOutlined />}
             />
           </Card>

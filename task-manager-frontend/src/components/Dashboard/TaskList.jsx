@@ -1,148 +1,57 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Table, Button, Modal, Input, DatePicker, message, Select, Popover } from 'antd';
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
-import duration from 'dayjs/plugin/duration'; // Import the duration plugin
-import { useSelector } from 'react-redux';
+import { DeleteOutlined, EditOutlined, SearchOutlined } from "@ant-design/icons";
+import {
+  Button,
+  DatePicker,
+  Input,
+  Modal,
+  Popover,
+  Select,
+  Table,
+  Space,
+} from "antd";
+import dayjs from "dayjs";
+import duration from "dayjs/plugin/duration";
+import React, { useState } from "react";
 
-dayjs.extend(duration); // Extend dayjs with the duration plugin
+dayjs.extend(duration);
 
 const { Option } = Select;
 
-const TaskList = () => {
-  const [tasks, setTasks] = useState([]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editTask, setEditTask] = useState(null);
-  const [title, setTitle] = useState('');
-  const [priority, setPriority] = useState(3);
-  const [startTime, setStartTime] = useState(null);
-  const [endTime, setEndTime] = useState(null);
-  const [status, setStatus] = useState('pending');
-  const [loading, setLoading] = useState(false);
-  const token = useSelector((state) => state.auth.token);
-
-  const statusOptions = ['pending', 'doing', 'finished'];
-
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('http://localhost:5000/tasks', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setTasks(response.data.tasks || []);
-        setLoading(false);
-      } catch (err) {
-        console.error(err);
-        setLoading(false);
-      }
-    };
-    fetchTasks();
-  }, [token]);
-
-  const handleAddTask = async () => {
-    if (!title || !startTime || !endTime) {
-      message.error('All fields are required!');
-      return;
-    }
-
-    const newTask = {
-      title,
-      priority,
-      status,
-      start_time: startTime,
-      end_time: endTime,
-    };
-
-    try {
-      await axios.post('http://localhost:5000/tasks', newTask, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setIsModalVisible(false);
-      message.success('Task created successfully');
-      setLoading(true);
-      const response = await axios.get('http://localhost:5000/tasks', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setTasks(response.data.tasks || []);
-      setLoading(false);
-    } catch (error) {
-      message.error('Error creating task');
-      setLoading(false);
-    }
-  };
-
-  const handleEditTask = async () => {
-    if (!title || !startTime || !endTime) {
-      message.error('All fields are required!');
-      return;
-    }
-
-    const updatedTask = {
-      title,
-      priority,
-      status,
-      start_time: startTime,
-      end_time: endTime,
-    };
-
-    try {
-      await axios.put(`http://localhost:5000/tasks/${editTask._id}`, updatedTask, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setIsModalVisible(false);
-      message.success('Task updated successfully');
-      setLoading(true);
-      const response = await axios.get('http://localhost:5000/tasks', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setTasks(response.data.tasks || []);
-      setLoading(false);
-    } catch (error) {
-      message.error('Error updating task');
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteTask = async (taskId) => {
-    try {
-      await axios.delete(`http://localhost:5000/tasks/${taskId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      message.success('Task deleted successfully');
-      setLoading(true);
-      const response = await axios.get('http://localhost:5000/tasks', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setTasks(response.data.tasks || []);
-      setLoading(false);
-    } catch (error) {
-      message.error('Error deleting task');
-      setLoading(false);
-    }
-  };
-
-  const handleOpenEditModal = (task) => {
-    setEditTask(task);
-    setTitle(task.title);
-    setPriority(task.priority);
-    setStartTime(dayjs(task.start_time));
-    setEndTime(dayjs(task.end_time));
-    setStatus(task.status);
-    setIsModalVisible(true);
-  };
+const TaskList = ({
+  loading,
+  tasks,
+  title,
+  setTitle,
+  priority,
+  setPriority,
+  startTime,
+  setStartTime,
+  endTime,
+  setEndTime,
+  status,
+  setStatus,
+  statusOptions,
+  editTask,
+  isModalVisible,
+  setIsModalVisible,
+  handleAddTask,
+  handleDeleteTask,
+  handleEditTask,
+  handleOpenEditModal,
+}) => {
+  const [searchText, setSearchText] = useState("");
+  const [filteredTasks, setFilteredTasks] = useState(tasks);
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending':
-        return 'red';
-      case 'doing':
-        return 'orange';
-      case 'finished':
-        return 'green';
+      case "pending":
+        return "red";
+      case "doing":
+        return "orange";
+      case "finished":
+        return "green";
       default:
-        return 'default';
+        return "default";
     }
   };
 
@@ -151,47 +60,103 @@ const TaskList = () => {
     const days = duration.days();
     const hours = duration.hours();
     const minutes = duration.minutes();
-    return `${days} day${days !== 1 ? 's' : ''} ${hours} hr${hours !== 1 ? 's' : ''} ${minutes} min${minutes !== 1 ? 's' : ''}`;
+    return `${days} day${days !== 1 ? "s" : ""} ${hours} hr${
+      hours !== 1 ? "s" : ""
+    } ${minutes} min${minutes !== 1 ? "s" : ""}`;
+  };
+
+  const handleSearch = (value) => {
+    setSearchText(value);
+    const filtered = tasks.filter((task) =>
+      task.title.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredTasks(filtered);
+  };
+
+  const handleFilterChange = (key, value) => {
+    const filtered = tasks.filter((task) => task[key] === value);
+    setFilteredTasks(filtered);
+  };
+
+  const handleResetFilters = () => {
+    setFilteredTasks(tasks);
+    setSearchText("");
   };
 
   const columns = [
-    { title: 'Title', dataIndex: 'title', key: 'title' },
-    { title: 'Priority', dataIndex: 'priority', key: 'priority' },
     {
-      title: 'Start Time',
-      dataIndex: 'start_time',
-      key: 'start_time',
-      render: (text) => dayjs(text).format('YYYY-MM-DD HH:mm:ss'),
+      title: "Title",
+      dataIndex: "title",
+      key: "title",
+      filterDropdown: () => (
+        <Input
+          placeholder="Search Title"
+          value={searchText}
+          onChange={(e) => handleSearch(e.target.value)}
+          style={{ width: 200, marginBottom: 8, display: "block" }}
+        />
+      ),
+      filterIcon: <SearchOutlined />,
+      onFilter: (value, record) =>
+        record.title.toLowerCase().includes(value.toLowerCase()),
     },
     {
-      title: 'End Time',
-      dataIndex: 'end_time',
-      key: 'end_time',
-      render: (text) => dayjs(text).format('YYYY-MM-DD HH:mm:ss'),
+      title: "Priority",
+      dataIndex: "priority",
+      key: "priority",
+      filters: [
+        { text: "1", value: 1 },
+        { text: "2", value: 2 },
+        { text: "3", value: 3 },
+        { text: "4", value: 4 },
+        { text: "5", value: 5 },
+      ],
+      onFilter: (value, record) => record.priority === value,
     },
     {
-      title: 'Duration',
-      key: 'duration',
+      title: "Start Time",
+      dataIndex: "start_time",
+      key: "start_time",
+      render: (text) => dayjs(text).format("YYYY-MM-DD HH:mm:ss"),
+      sorter: (a, b) => dayjs(a.start_time).diff(dayjs(b.start_time)),
+    },
+    {
+      title: "End Time",
+      dataIndex: "end_time",
+      key: "end_time",
+      render: (text) => dayjs(text).format("YYYY-MM-DD HH:mm:ss"),
+      sorter: (a, b) => dayjs(a.end_time).diff(dayjs(b.end_time)),
+    },
+    {
+      title: "Duration",
+      key: "duration",
       render: (_, task) => calculateDuration(task.start_time, task.end_time),
+      sorter: (a, b) =>
+        dayjs(b.end_time).diff(b.start_time) -
+        dayjs(a.end_time).diff(a.start_time),
     },
     {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      filters: statusOptions.map((status) => ({
+        text: status,
+        value: status,
+      })),
+      onFilter: (value, record) => record.status === value,
       render: (status) => {
         let color = getStatusColor(status);
         return <span style={{ color }}>{status}</span>;
       },
     },
     {
-      title: 'Actions',
-      key: 'actions',
+      title: "Actions",
+      key: "actions",
       render: (_, task) => (
-        <>
+        <Space>
           <Button
             icon={<EditOutlined />}
             onClick={() => handleOpenEditModal(task)}
-            style={{ marginLeft: 8 }}
           />
           <Popover
             content={
@@ -205,38 +170,30 @@ const TaskList = () => {
             title="Are you sure?"
             trigger="click"
           >
-            <Button
-              icon={<DeleteOutlined />}
-              type="primary"
-              danger
-              style={{ marginLeft: 8 }}
-            />
+            <Button icon={<DeleteOutlined />} danger />
           </Popover>
-        </>
+        </Space>
       ),
     },
   ];
 
-  const rowClassName = (task) => {
-    return `task-row ${getStatusColor(task.status)}`;
-  };
-
   return (
     <div className="task-list-container">
-      <Button type="primary" onClick={() => setIsModalVisible(true)}>
-        Add Task
-      </Button>
+      <Space style={{ marginBottom: 16 }}>
+        <Button type="primary" onClick={() => setIsModalVisible(true)}>
+          Add Task
+        </Button>
+        <Button onClick={handleResetFilters}>Reset Filters</Button>
+      </Space>
       <Table
-        dataSource={tasks}
+        dataSource={filteredTasks.length ? filteredTasks : tasks}
         columns={columns}
         rowKey="_id"
         style={{ marginTop: 16 }}
         loading={loading}
-        rowClassName={rowClassName}
       />
-
       <Modal
-        title={editTask ? 'Edit Task' : 'Create Task'}
+        title={editTask ? "Edit Task" : "Create Task"}
         visible={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         onOk={editTask ? handleEditTask : handleAddTask}
@@ -271,7 +228,7 @@ const TaskList = () => {
           <Select
             value={status}
             onChange={(value) => setStatus(value)}
-            style={{ marginTop: 10, width: '100%' }}
+            style={{ marginTop: 10, width: "100%" }}
           >
             {statusOptions.map((statusOption) => (
               <Option key={statusOption} value={statusOption}>
@@ -280,7 +237,11 @@ const TaskList = () => {
             ))}
           </Select>
         ) : (
-          <Select value={status} disabled style={{ marginTop: 10, width: '100%' }}>
+          <Select
+            value={status}
+            disabled
+            style={{ marginTop: 10, width: "100%" }}
+          >
             <Option value="pending">pending</Option>
           </Select>
         )}
