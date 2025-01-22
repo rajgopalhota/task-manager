@@ -8,12 +8,14 @@ import EditTask from "./components/Task/EditTask";
 import { Provider } from "react-redux";
 import store from "./reduxstore/store";
 import Layout from "./components/Layout";
+import Home from "./components/Home";
 
 const App = () => (
   <Provider store={store}>
     <Router>
       <Layout>
         <Routes>
+          <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
