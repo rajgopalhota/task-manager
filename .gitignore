@@ -1,0 +1,38 @@
+# Node modules
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+
+# Build artifacts
+dist/
+build/
+
+# Cache files
+.cache/
+
+# Database files
+*.db
+*.sqlite
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Coverage files
+coverage/
+
+# Frontend specific files
+/frontend/node_modules/
+/frontend/build/
+/frontend/dist/
+/frontend/.cache/
+/frontend/.env
+
+# Backend specific files
+/backend/node_modules/
+/backend/.env
