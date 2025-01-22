@@ -1,18 +1,16 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { useSelector } from "react-redux";
-import { Card, Row, Col, Statistic } from "antd";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   FileDoneOutlined,
   HourglassOutlined,
 } from "@ant-design/icons";
+import { Card, Col, Row, Statistic } from "antd";
+import React from "react";
 
 const Statistics = ({ stats }) => {
   return (
     <div>
-      <h2>Dashboard Stats</h2>
+      <h1 className="gradient-text-blue text-3xl font-bold uppercase">Dashboard Stats</h1>
       <Row gutter={16}>
         <Col span={8}>
           <Card>

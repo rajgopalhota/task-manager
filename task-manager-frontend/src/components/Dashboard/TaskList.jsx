@@ -128,14 +128,6 @@ const TaskList = ({
       sorter: (a, b) => dayjs(a.end_time).diff(dayjs(b.end_time)),
     },
     {
-      title: "Duration",
-      key: "duration",
-      render: (_, task) => calculateDuration(task.start_time, task.end_time),
-      sorter: (a, b) =>
-        dayjs(b.end_time).diff(b.start_time) -
-        dayjs(a.end_time).diff(a.start_time),
-    },
-    {
       title: "Status",
       dataIndex: "status",
       key: "status",
@@ -175,11 +167,22 @@ const TaskList = ({
         </Space>
       ),
     },
+    {
+      title: "Duration",
+      key: "duration",
+      render: (_, task) => calculateDuration(task.start_time, task.end_time),
+      sorter: (a, b) =>
+        dayjs(b.end_time).diff(b.start_time) -
+        dayjs(a.end_time).diff(a.start_time),
+    },
   ];
+  const rowClassName = (task) => {
+    return `task-row ${getStatusColor(task.status)}`;
+  };  
 
   return (
     <div className="task-list-container">
-      <Space style={{ marginBottom: 16 }}>
+      <Space className="my-3">
         <Button type="primary" onClick={() => setIsModalVisible(true)}>
           Add Task
         </Button>
@@ -191,6 +194,7 @@ const TaskList = ({
         rowKey="_id"
         style={{ marginTop: 16 }}
         loading={loading}
+        rowClassName={rowClassName}
       />
       <Modal
         title={editTask ? "Edit Task" : "Create Task"}
