@@ -1,4 +1,8 @@
-import { DeleteOutlined, EditOutlined, SearchOutlined } from "@ant-design/icons";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
 import {
   Button,
   DatePicker,
@@ -11,7 +15,7 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 dayjs.extend(duration);
 
@@ -32,6 +36,7 @@ const TaskList = ({
   setStatus,
   statusOptions,
   editTask,
+  setEditTask,
   isModalVisible,
   setIsModalVisible,
   handleAddTask,
@@ -41,6 +46,25 @@ const TaskList = ({
 }) => {
   const [searchText, setSearchText] = useState("");
   const [filteredTasks, setFilteredTasks] = useState(tasks);
+
+  // Reset the modal for the "Add Task" view
+  useEffect(() => {
+    if (!editTask && isModalVisible) {
+      setTitle("");
+      setPriority("");
+      setStartTime(null);
+      setEndTime(null);
+      setStatus("pending"); // Default status for add task
+    }
+  }, [
+    editTask,
+    isModalVisible,
+    setTitle,
+    setPriority,
+    setStartTime,
+    setEndTime,
+    setStatus,
+  ]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -152,10 +176,7 @@ const TaskList = ({
           />
           <Popover
             content={
-              <Button
-                type="danger"
-                onClick={() => handleDeleteTask(task._id)}
-              >
+              <Button type="danger" onClick={() => handleDeleteTask(task._id)}>
                 Confirm Delete
               </Button>
             }
@@ -178,12 +199,17 @@ const TaskList = ({
   ];
   const rowClassName = (task) => {
     return `task-row ${getStatusColor(task.status)}`;
-  };  
+  };
 
   return (
     <div className="task-list-container">
       <Space className="my-3">
-        <Button type="primary" onClick={() => setIsModalVisible(true)}>
+        <Button
+          type="primary"
+          onClick={() => {
+            setIsModalVisible(true)
+          }}
+        >
           Add Task
         </Button>
         <Button onClick={handleResetFilters}>Reset Filters</Button>
@@ -199,7 +225,10 @@ const TaskList = ({
       <Modal
         title={editTask ? "Edit Task" : "Create Task"}
         visible={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
+        onCancel={() => {
+          setEditTask(null)
+          setIsModalVisible(false)
+        }}
         onOk={editTask ? handleEditTask : handleAddTask}
       >
         <Input

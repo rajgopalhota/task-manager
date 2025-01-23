@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import Statistics from "./Statistics";
 import TaskList from "./TaskList";
 import dayjs from "dayjs";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({});
@@ -24,7 +25,7 @@ const Dashboard = () => {
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:5000/tasks", {
+      const response = await axios.get("http://localhost:5000/api/tasks", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setTasks(response.data.tasks || []);
@@ -39,9 +40,12 @@ const Dashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/dashboard-stats", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get(
+        "http://localhost:5000/api/tasks/dashboard-stats",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setStats(response.data);
     } catch (error) {
       console.error("Error fetching stats:", error);
@@ -51,7 +55,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchTasks();
-  }, [token]);
+  },[token]);
 
   const handleAddTask = async () => {
     if (!title || !startTime || !endTime) {
@@ -68,10 +72,15 @@ const Dashboard = () => {
     };
 
     try {
-      await axios.post("http://localhost:5000/tasks", newTask, {
+      await axios.post("http://localhost:5000/api/tasks", newTask, {
         headers: { Authorization: `Bearer ${token}` },
       });
       message.success("Task created successfully");
+      setTitle("");
+      setPriority("");
+      setEndTime("");
+      setStartTime("");
+      setStatus("pending");
       setIsModalVisible(false);
       fetchTasks();
     } catch (error) {
@@ -95,13 +104,14 @@ const Dashboard = () => {
 
     try {
       await axios.put(
-        `http://localhost:5000/tasks/${editTask._id}`,
+        `http://localhost:5000/api/tasks/${editTask._id}`,
         updatedTask,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       message.success("Task updated successfully");
+      setEditTask(null);
       setIsModalVisible(false);
       fetchTasks();
     } catch (error) {
@@ -111,7 +121,7 @@ const Dashboard = () => {
 
   const handleDeleteTask = async (taskId) => {
     try {
-      await axios.delete(`http://localhost:5000/tasks/${taskId}`, {
+      await axios.delete(`http://localhost:5000/api/tasks/${taskId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       message.success("Task deleted successfully");
@@ -131,32 +141,66 @@ const Dashboard = () => {
     setIsModalVisible(true);
   };
 
-  return (
-    <div>
-      <Statistics stats={stats} />
-      <TaskList
-        loading={loading}
-        tasks={tasks}
-        title={title}
-        setTitle={setTitle}
-        priority={priority}
-        setPriority={setPriority}
-        startTime={startTime}
-        setStartTime={setStartTime}
-        endTime={endTime}
-        setEndTime={setEndTime}
-        status={status}
-        setStatus={setStatus}
-        statusOptions={statusOptions}
-        editTask={editTask}
-        isModalVisible={isModalVisible}
-        setIsModalVisible={setIsModalVisible}
-        handleAddTask={handleAddTask}
-        handleDeleteTask={handleDeleteTask}
-        handleEditTask={handleEditTask}
-        handleOpenEditModal={handleOpenEditModal}
-      />
-    </div>
+  return token ? (
+    <>
+      <div>
+        <Statistics stats={stats} />
+        <TaskList
+          loading={loading}
+          tasks={tasks}
+          title={title}
+          setTitle={setTitle}
+          priority={priority}
+          setPriority={setPriority}
+          startTime={startTime}
+          setStartTime={setStartTime}
+          endTime={endTime}
+          setEndTime={setEndTime}
+          status={status}
+          setStatus={setStatus}
+          statusOptions={statusOptions}
+          editTask={editTask}
+          setEditTask={setEditTask}
+          isModalVisible={isModalVisible}
+          setIsModalVisible={setIsModalVisible}
+          handleAddTask={handleAddTask}
+          handleDeleteTask={handleDeleteTask}
+          handleEditTask={handleEditTask}
+          handleOpenEditModal={handleOpenEditModal}
+        />
+      </div>
+    </>
+  ) : (
+    <>
+      <div className="flex flex-col items-center justify-center text-gray-800">
+        <img
+          src="/auth.gif"
+          alt="Sign In Required"
+          className="w-1/2 max-w-md mb-6 mix-blend-multiply"
+        />
+        <h1 className="text-2xl font-bold mb-4 gradient-text-blue">
+          You need to sign in to view this page
+        </h1>
+        <p className="text-lg text-gray-600 mb-6 text-center">
+          Please log in to your account to access this content. If you don’t
+          have an account, register now!
+        </p>
+        <div className="flex space-x-4">
+          <Link
+            to={"/login"}
+            className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg shadow-md"
+          >
+            Sign In
+          </Link>
+          <Link
+            to={"/register"}
+            className="border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white py-2 px-6 rounded-lg shadow-md"
+          >
+            Register
+          </Link>
+        </div>
+      </div>
+    </>
   );
 };
 
